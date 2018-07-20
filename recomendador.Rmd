@@ -23,7 +23,12 @@ library(DT)
 library(pander)
 library(plotly)
 
+
+devtools::install_github("luisalejandrolee/utilucho")
+library(utilucho)
+
 source("scripts/data_cleaning_and_preparation.R")
+
 ```
 
 # Import and others
@@ -77,21 +82,11 @@ tail(dt, 10)
 dt[5000000: 5000005]
 dt[num_id == "80821436"]
 
-###
-### comment
-### comment 2
-### more test
-```
-
-
-
-```{r}
 
 ```
 
-```{r}
 
-```
+
 
 ```{r}
 
