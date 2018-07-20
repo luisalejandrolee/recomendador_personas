@@ -1,0 +1,116 @@
+---
+title: "Cool Title"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+Standard libraries
+```{r}
+rm(list = ls())
+options(scipen=999) # scientific notation
+
+library(data.table)
+library(ggplot2)
+library(caret)
+library(plotly)
+library(dplyr)
+library(DT)
+library(pander)
+library(plotly)
+
+```
+
+# Import and others
+```{r}
+#read data
+#read data
+my_data_folder <- "data/"
+
+my_data_file <- "mes_201806.csv" # insert name of the file to import
+
+
+dt <- fread(paste0(my_data_folder, my_data_file)) # main data
+#dt <- fread(my_data_file, colClasses = "character") # all as character
+
+```
+
+```{r}
+str(dt)
+```
+
+```{r}
+# sample each dataset to reduce and make it workable and write code easier.
+# Create function and use package and use GIT for this.
+
+# load several months as differents datasets, (and combine them?). 
+
+# delete TIPO_ID and tipo_id2 and _NAME_ (use a function)
+
+# convert PERIODO to date format (use a function)
+
+# replace nas with zeros (create function. Also make some functions to give give median, etc)
+
+# create lag variables for each (create function)
+# create adquisition variables: when there's a new product (as a dummy) and when dropping one
+# create lags for adquisition variables as well
+
+# create target variable (function)
+
+# Check and analyiza data
+## check some stats (create shiny app!.. for time series)
+## check correlations
+## do a market basket analysis!
+
+# are there products usually bought together?
+# does it usually happen that when buying a credit card, another product is always owned?
+
+
+
+
+tail(dt, 10)
+dt[5000000: 5000005]
+dt[num_id == "80821436"]
+
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
