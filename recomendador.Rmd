@@ -29,7 +29,7 @@ library(plotly)
 ```{r}
 #read data
 #read data
-my_data_folder <- "data/"
+my_data_folder <- "data/raw/"
 
 my_data_file <- "mes_201806.csv" # insert name of the file to import
 
