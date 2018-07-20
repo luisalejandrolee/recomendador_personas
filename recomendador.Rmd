@@ -23,6 +23,7 @@ library(DT)
 library(pander)
 library(plotly)
 
+source("scripts/data_cleaning_and_preparation.R")
 ```
 
 # Import and others
@@ -82,9 +83,7 @@ dt[num_id == "80821436"]
 ### more test
 ```
 
-```{r}
 
-```
 
 ```{r}
 
