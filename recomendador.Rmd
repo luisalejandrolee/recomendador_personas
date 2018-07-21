@@ -24,7 +24,7 @@ library(pander)
 library(plotly)
 
 
-devtools::install_github("luisalejandrolee/utilucho")
+#devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
 
 source("scripts/data_cleaning_and_preparation.R")
@@ -32,16 +32,30 @@ source("scripts/data_cleaning_and_preparation.R")
 ```
 
 # Import and others
+
 ```{r}
-#read data
-#read data
-my_data_folder <- "data/raw/"
+folder <- "data/raw/"
 
-my_data_file <- "mes_201806.csv" # insert name of the file to import
+files <- c("mes_201706", "mes_201707", "mes_201708", "mes_201709", "mes_201710",
+           "mes_201711", "mes_201712", "mes_201801", "mes_201802", "mes_201803",
+           "mes_201804", "mes_201805", "mes_201806")
+
+all_months <- import_as_list(folder, files)
 
 
-dt <- fread(paste0(my_data_folder, my_data_file)) # main data
-#dt <- fread(my_data_file, colClasses = "character") # all as character
+
+```
+
+```{r}
+all_months[[13]]
+```
+
+
+```{r}
+
+```
+
+```{r}
 
 ```
 
@@ -50,10 +64,10 @@ str(dt)
 ```
 
 ```{r}
-# sample each dataset to reduce and make it workable and write code easier.
-# Create function and use package and use GIT for this.
 
-# load several months as differents datasets, (and combine them?). 
+# load several months as differents datasets, (and combine them?).
+
+# sample each dataset to reduce and make it workable and write code easier.
 
 # delete TIPO_ID and tipo_id2 and _NAME_ (use a function)
 
@@ -74,14 +88,6 @@ str(dt)
 
 # are there products usually bought together?
 # does it usually happen that when buying a credit card, another product is always owned?
-
-
-
-
-tail(dt, 10)
-dt[5000000: 5000005]
-dt[num_id == "80821436"]
-
 
 ```
 
