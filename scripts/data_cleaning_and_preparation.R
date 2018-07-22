@@ -42,18 +42,30 @@ convert_to_yearmon <- function(s){
 #' into proper format and renaming variables
 #' @param dt_list A list with several data.tables, all in the same format
 #' @param cols_to_del Vector with column names to delete
+#' @usage Changes all data.tables in the list dinamycally
 clean_dt_in_list <- function(dt_list, cols_to_del){
   for(i in 1:length(dt_list)){
     
     all_months[[i]][, (cols_to_del) := NULL]
     all_months[[i]][, PERIODO := convert_to_yearmon(PERIODO)]
+    old_cols <- names(all_months[[i]])
+    setnames(all_months[[i]], old_cols, format_columns(old_cols))
     
-  } # for
+  } # for loop
   
 } # end of clean_dt_in_list
 
-
-
+#' Used to format column names quickly
+#' @param old_cols Vector of strings to modify
+#' @return Vector of formatted strings 
+format_columns <- function(old_cols){
+  
+  new_cols <- sapply(old_cols, tolower) # to lower case
+  new_cols <- gsub(" ", "_", new_cols) # change spaces with underscores
+  
+  return(new_cols)
+  
+}
 
 
 

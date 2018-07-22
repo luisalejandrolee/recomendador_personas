@@ -44,21 +44,19 @@ all_months <- import_as_list(folder, files)
 
 ```
 
+# Clean data
 ```{r}
 
 cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_", "CONSTRUCTOR")
+
+# Remove columns, change PERIODO to date format, and format column names
 clean_dt_in_list(all_months, cols_to_del)
 
-
-
 ```
-
 
 ```{r}
 
 
-
-# clean names: all lower case, replace spaces with underscore
 
 
 
