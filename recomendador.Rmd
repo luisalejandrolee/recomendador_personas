@@ -22,7 +22,7 @@ library(dplyr)
 library(DT)
 library(pander)
 library(plotly)
-
+library(xts)
 
 #devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
@@ -42,36 +42,49 @@ files <- c("mes_201706", "mes_201707", "mes_201708", "mes_201709", "mes_201710",
 
 all_months <- import_as_list(folder, files)
 
-
-
-```
-
-```{r}
-all_months[[13]]
-```
-
-
-```{r}
-
 ```
 
 ```{r}
 
+cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_", "CONSTRUCTOR")
+clean_dt_in_list(all_months, cols_to_del)
+
+
+
 ```
 
+
 ```{r}
-str(dt)
+
+
+
+# clean names: all lower case, replace spaces with underscore
+
+
+
+
+
+
+# bind data (now that there are less columns)
+
+# particular divisions (chosen by experimenting memory allowance)
+months_2017 <- rbindlist(all_months[1:7])
+months_2018 <- rbindlist(all_months[8:13])
+
+
+dt <- rbindlist(list(months_2017, months_2018))
+rm(months_2017, months_2018) # delete old files
+
+rm(all_months) # delete long list with all months
+
 ```
 
-```{r}
 
-# load several months as differents datasets, (and combine them?).
+
+
+```{r}
 
 # sample each dataset to reduce and make it workable and write code easier.
-
-# delete TIPO_ID and tipo_id2 and _NAME_ (use a function)
-
-# convert PERIODO to date format (use a function)
 
 # replace nas with zeros (create function. Also make some functions to give give median, etc)
 
