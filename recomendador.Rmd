@@ -54,6 +54,19 @@ clean_dt_in_list(all_months, cols_to_del)
 
 ```
 
+# Sample data
+
+```{r}
+dts_sampled <- get_samples_dts(all_months, 100000, frac = FALSE)
+
+# Check how many clients of the original sample remain month after month
+
+#for(i in 1:length(dts_sampled)){
+#  print(nrow(dts_sampled[[i]]))
+#}
+```
+
+
 ```{r}
 
 
@@ -62,18 +75,6 @@ clean_dt_in_list(all_months, cols_to_del)
 
 
 
-
-# bind data (now that there are less columns)
-
-# particular divisions (chosen by experimenting memory allowance)
-months_2017 <- rbindlist(all_months[1:7])
-months_2018 <- rbindlist(all_months[8:13])
-
-
-dt <- rbindlist(list(months_2017, months_2018))
-rm(months_2017, months_2018) # delete old files
-
-rm(all_months) # delete long list with all months
 
 ```
 
@@ -83,6 +84,8 @@ rm(all_months) # delete long list with all months
 ```{r}
 
 # sample each dataset to reduce and make it workable and write code easier.
+# create target variable (function)
+
 
 # replace nas with zeros (create function. Also make some functions to give give median, etc)
 
@@ -90,7 +93,7 @@ rm(all_months) # delete long list with all months
 # create adquisition variables: when there's a new product (as a dummy) and when dropping one
 # create lags for adquisition variables as well
 
-# create target variable (function)
+
 
 # Check and analyiza data
 ## check some stats (create shiny app!.. for time series)
@@ -103,10 +106,19 @@ rm(all_months) # delete long list with all months
 ```
 
 
-
-
 ```{r}
 
+# bind data (now that there are less columns)
+
+# particular divisions (chosen by experimenting memory allowance)
+#months_2017 <- rbindlist(all_months[1:7])
+#months_2018 <- rbindlist(all_months[8:13])
+
+
+#dt <- rbindlist(list(months_2017, months_2018))
+#rm(months_2017, months_2018) # delete old files
+
+#rm(all_months) # delete long list with all months
 ```
 
 
