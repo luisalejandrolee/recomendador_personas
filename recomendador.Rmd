@@ -55,19 +55,29 @@ clean_dt_in_list(all_months, cols_to_del)
 
 ```
 
-# Sample data
-
-I have tried with up to one million clients, and seems to be manageable in memory
 ```{r}
+all_months[[10]]
+```
+
+# Sample data and join all months
+
+```{r}
+# decide if sampling is needed. Then comment and uncomment accordingly
 
 dts_sampled <- get_samples_dts(all_months, 1000000, frac = FALSE) # sample data
-dt <- rbindlist(dts_sampled) # merge all sampled months in a single data.table
+
+dt <- rbindlist(dts_sampled) # merge all SAMPLED months in a single data.table
+#dt <- rbindlist(all_months) # merge all NON SAMPLED months in a single data.table
+
+rm(all_months) # delete non merged datasets
 
 # Check how many clients of the original sample remain month after month
 
 #for(i in 1:length(dts_sampled)){
 #  print(nrow(dts_sampled[[i]]))
 #}
+#dts_sampled[[2]]
+
 dt
 ```
 
@@ -85,38 +95,76 @@ dup[, .N, by = periodo]
 # remove duplicate clients in the same month
 dup <- dt[, duplicated(num_id), by = periodo] # keeps in V1 if duplicated
 dt <- dt[dup$V1 == FALSE] # keep non-duplicated
+rm(dup) # delete duplicates (not needed anymore)
+str(dt)
 ```
 
+# Feature engineering
+Next code works fine. To add:
+* change NAs with zero? (must be done in the first data cleaning, inside the function)
+* subtract t_cred_l1 - t_cred
+* make it binary (1 if >0) and that's the target.
+
+* Repeat the same for all desired products and lags (make a function)
+* Also do without the binary addition, and that's the main feature engineering
+
+For data exploration: 
+* Count number of clients that **aqcuired** (bought) each product
+* Count number of clients that **had** (possesion) each product
+* Put all of it in a matrix of counts (with many columns). That's the input for
+the Shiny app
 
 ```{r}
+dt <- complete_id_time(dt, "periodo", "num_id")
+
+#full_dt[num_id == "1000000849"][order(num_id, periodo)]
+dt[order(num_id, periodo)]
+```
+
+```{r}
+# function lagged products: for product, for lag: 
+
+create_lagged_vars <- function(dt, vars_to_lag, time_var, lags){
+  for (var in vars_to_lag){
+    print(var)
+    for (lag in lags){
+      
+      
+      dt[order(time_var), new_var_to_replace := lag.xts(var, k = lag), by = num_id]
+      new_var_name <- paste0(var, "_lg", lag)
+      setnames(dt, "new_var_to_replace", new_var_name)
+      
+    } # lags loop
+
+  } # products loop
+  
+  
+} # end of create_lagged_vars
+
+
+# new_var_name = paste0(product, "_l", lag)
+# setnames(dt, new_var_to_replace, new_var_name)
+```
+
+```{r}
+products <- c("t_credito", "nomina", "ahorros")
+lags <- c(1, 2)
+
+create_lagged_vars(dt, products, lags)
+#dt[order(num_id, periodo), .(num_id, periodo, t_credito, t_credito_l1)]
 
 ```
 
 ```{r}
-
+dt[order(periodo)]
+dt[order(periodo), t_credito_lg1 := lag.xts(t_credito, k = 1), by = num_id]
+dt[order(num_id, periodo), .(num_id, periodo, t_credito, t_credito_lg1)]
 ```
-
-```{r}
-
-```
-
-```{r}
-
-```
-
-# Create target variable
-
-```{r}
-# make it for tarjeta de credito, but in the function leave it as chosen for any product
-
-```
-
 
 ```{r}
 # replace nas with zeros (create function. Also make some functions to give give median, etc)
 
-# check values for each product: max number of products per client
-# decide if making an upper bound
+
 
 # create lag variables for each (create function)
 # create adquisition variables: when there's a new product (as a dummy) and when dropping one
@@ -125,6 +173,9 @@ dt <- dt[dup$V1 == FALSE] # keep non-duplicated
 
 
 # Check and analyiza data
+
+## check values for each product: max number of products per client
+## decide if making an upper bound
 ## check some stats (create shiny app!.. for time series)
 ## check correlations
 ## do a market basket analysis!

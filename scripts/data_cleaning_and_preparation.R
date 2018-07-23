@@ -33,7 +33,7 @@ convert_to_yearmon <- function(s){
   
   years <- substr(s, 1, 4)
   months <- substr(s, 5, 6)
-  date <- paste0(years, "_",months)
+  date <- paste0(years, "_", months)
   date <- as.yearmon(date, "%Y_%m")
   
   return(date)
@@ -57,6 +57,9 @@ clean_dt_in_list <- function(dt_list, cols_to_del){
     old_cols <- names(all_months[[i]]) 
     setnames(all_months[[i]], old_cols, format_columns(old_cols))
     
+    # replace NA's with zeros
+    utilucho::input_nas(all_months[[i]], names(all_months[[i]]), "zero")
+    
   } # for loop
   
 } # end of clean_dt_in_list
@@ -78,11 +81,11 @@ format_columns <- function(old_cols){
 
 #' Gets the data.tables in a list and samples them. This is used to work with
 #' samples when there's a lot of data (so that one can merge after sampling). It
-#' chooses randomly a number of clients from the first month, and chooses only 
-#' those clients for all following months (each data.table in the list)
+#' chooses randomly a number of clients from the last month, and chooses only 
+#' those clients for all previous months (each data.table in the list)
 #' @param dt_list List with data from all months
 #' @param sample_size Number of rows (clients, assuming they are unique) to
-#' sample from the first month (first position in the list), if \code{frac == FALSE}.
+#' sample from the last month (last position in the list), if \code{frac == FALSE}.
 #' If \code{frac == TRUE}, must be between zero and one
 #' @param frac Whether sampling is by fraction or by number of rows
 #' @value List of the same lenght of \code{dt_list}, each element containing a 
@@ -91,7 +94,8 @@ format_columns <- function(old_cols){
 get_samples_dts <- function(dt_list, sample_size, frac = FALSE){
   
   # Sampling is done based on the first month
-  first_dt <- dt_list[[1]]
+  last_month <- length(dt_list)
+  first_dt <- dt_list[[last_month]]
   
   # Get a sample of clients
   if(frac == TRUE){
@@ -116,5 +120,49 @@ get_samples_dts <- function(dt_list, sample_size, frac = FALSE){
   return(sampled_dts)
   
 } # end of sample_data
+
+
+#' In a data.table containing ids and time variables, returns a data.table in which
+#' every id has associated a row with all time periods present in the whole data.
+#' @usage This is used so that when lagging a variable the lag is for calendar time. For
+#' example, when including a lag of 1, it is related to the last calendar point in time,
+#' instead of the last point in time in which that id reported something. In points in
+#' time where the client did not report aanything (e.g. was not in the data), it will
+#' appear with NA for all columns besides \code{time_var} and \code{id_var}
+#' @param dt data.table containing a time variable and an id variable
+#' @param time_var Column in \code{dt} representing time
+#' @param id_var Column in \code{dt} representing a an observation (e.g. a client)
+#' 
+complete_id_time <- function(dt, time_var, id_var){
+  
+  # get unique dates and ids as vectors
+  dates <- unique(dt[, ..time_var])[[1]] 
+  ids <- unique(dt[, ..id_var])[[1]]
+  
+  # Get all possible combinations of id and time
+  all_rows <- expand.grid(dates, ids) %>% as.data.table()
+  
+  # Rename for easy merging
+  setnames(all_rows, names(all_rows), c(time_var, id_var))
+  
+  # data.table with all ids and times. If a cliente does not report anything
+  # in a given point in time, it shows NA
+  final_dt <- merge(all_rows, dt, all.x = T)
+  
+  return(final_dt)
+  
+} # end of complete_id_time
+
+
+
+
+
+
+
+
+
+
+
+
 
 
