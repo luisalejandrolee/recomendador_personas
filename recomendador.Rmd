@@ -65,21 +65,18 @@ all_months[[10]]
 # Sample by choosing n clients from the last month, and then retrieve those for
 # previous months
 
-dts_sampled <- get_samples_dts(all_months, 100000, frac = FALSE) # sample data
+dts_sampled <- get_samples_dts(all_months, 1000, frac = FALSE) # sample data
+rm(all_months) # delete non merged datasets
 
 dt <- rbindlist(dts_sampled) # merge all SAMPLED months in a single data.table
 #dt <- rbindlist(all_months) # merge all NON SAMPLED months in a single data.table
+rm(dts_sampled)
 
-#rm(all_months) # delete non merged datasets
-#rm(dts_sampled)
 # Check how many clients of the original sample remain month after month
-
 #for(i in 1:length(dts_sampled)){
 #  print(nrow(dts_sampled[[i]]))
 #}
 #dts_sampled[[2]]
-
-dt
 ```
 
 
@@ -139,8 +136,15 @@ dt <- create_lagged_vars(dt, products, lags)
 
 
 ```{r}
+# choose products to create aqcuisition variables
+products <- products # reminder that products have been defined before. Change if needed
 
+create_acquisition_and_loss(dt, products)
 ```
+
+# Summarize aqcuisition and loss (counts)
+Print as a data.table with rows = one month, columns = aqcuisition of each 
+product, 
 
 ```{r}
 # replace nas with zeros (create function. Also make some functions to give give median, etc)

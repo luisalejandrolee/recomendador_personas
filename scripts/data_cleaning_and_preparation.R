@@ -183,9 +183,34 @@ create_lagged_vars <- function(dt, vars_to_lag, lags){
   
 }
 
+#' Adds dinamycally in \code{dt}, for each variable in \code{cols}, three new 
+#' variables: one with the difference compared to one period lag, and two dummies,
+#' one if a new product was aqcuired and other if a product was lost
+#' @param dt data.table with lags already included for \code{cols}
+#' @param cols Column names for which to include difference with lag 1, and dummies
+#' for new tenency and losses in tenency
+#' @value Return \code{dt} with added columns for difference and tenency
 
-
-
+create_acquisition_and_loss <- function(dt, cols){
+  
+  for (var in cols) { # all products
+    
+    lag_diff <- paste0(var, "_diff") # name for tenency difference (variable to create)
+    lagged_var <- paste0(var, "_lag_1") # assumes name structure of lagged variables
+    
+    # creates difference compared to last period
+    dt[, (lag_diff) := get(var) - get(lagged_var)]
+    
+    new_var <- paste0(var, "_new") # name for tenency dummy when a new product is acquired
+    loss_var <- paste0(var, "_loss") # name for tenency dummy when a product is cancelled
+    
+    # create dummy if product is acquired
+    dt[, (new_var) := ifelse(get(lag_diff) > 0, 1, 0)]
+    # create dummy if product is cancelled
+    dt[, (loss_var) := ifelse(get(lag_diff) < 0, 1, 0)]
+    
+  } # for loop
+} # end of create_acquisition_and_loss
 
 
 
