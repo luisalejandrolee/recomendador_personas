@@ -47,7 +47,7 @@ all_months <- import_as_list(folder, files)
 # Clean data (first stage)
 ```{r}
 
-cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_", "CONSTRUCTOR")
+cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_")
 
 # Make ID as character, remove columns, change PERIODO to date format,
 # and format column names
@@ -101,8 +101,6 @@ str(dt)
 ```
 
 # Feature engineering
-Next code works fine. To add:
-* change NAs with zero? (must be done in the first data cleaning, inside the function)
 * subtract t_cred_l1 - t_cred
 * make it binary (1 if >0) and that's the target.
 
@@ -131,31 +129,13 @@ dt <- complete_id_time(dt, "periodo", "num_id")
 ```{r}
 
 
-products <- c("cdt", "t_credito", "ahorros")
-lags <- c(1, 2, 5)
+#products <- c("t_credito", "crediservice")
+products <- names(dt)[3:length(names(dt))] # all variables (except id and periodo)
+lags <- c(1:(length(unique(dt$periodo))-1)) # all possible lags but last one
 
-dt <- dt[order(num_id, periodo)]
-
-test <- dt[, shift(.SD, lags, give.names = TRUE), by = num_id,
-                           .SDcols = products]
-test
-
-
-
-#dt[order(num_id, periodo)]
-
-
-test1 <- cbind(dt, test)
-test1[order(num_id, periodo)][, .(num_id, periodo, cdt, cdt_lag_1, cdt_lag_2,
-                                  cdt_lag_5, t_credito, t_credito_lag_1, t_credito_lag_2,
-                                  t_credito_lag_5, ahorros, ahorros_lag_1, ahorros_lag_2,
-                                  ahorros_lag_5)]
+dt <- create_lagged_vars(dt, products, lags)
 ```
-
-
-```{r}
-dt
-```
+## Create acquisition and loss of products
 
 
 ```{r}
@@ -187,20 +167,6 @@ dt
 ```
 
 
-```{r}
-
-# bind data (now that there are less columns)
-
-# particular divisions (chosen by experimenting memory allowance)
-#months_2017 <- rbindlist(all_months[1:7])
-#months_2018 <- rbindlist(all_months[8:13])
-
-
-#dt <- rbindlist(list(months_2017, months_2018))
-#rm(months_2017, months_2018) # delete old files
-
-#rm(all_months) # delete long list with all months
-```
 
 
 

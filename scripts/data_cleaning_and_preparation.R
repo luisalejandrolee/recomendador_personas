@@ -157,6 +157,31 @@ complete_id_time <- function(dt, time_var, id_var){
 
 
 
+#' Creates all chosen lags (concatenated directly to \code{dt}) for all chosen
+#' variables (products).
+#' @param return \code{dt} with added columns for lagged variables
+#' @param dt data.table with \code{num_id} as id variable, and \code{periodo} as
+#' time variable
+#' @param vars_to_lag Vector (strings) with column names to lag
+#' @param lags Numeric vector with lags to include for all \code{vars_to_lag}
+create_lagged_vars <- function(dt, vars_to_lag, lags){
+  
+  # Very important to order dt. Otherwise, can't concatenate later with the lagged dt
+  # TODO: if want to use for other projects, must make id and time variable
+  # parameters of the function (not directly chosen as is now)
+  dt <- dt[order(num_id, periodo)]
+  
+  # Get a separate data.table with all lags for all chosen variables
+  lagged_dt <- dt[, shift(.SD, lags, give.names = TRUE), by = num_id,
+                  .SDcols = products]
+  
+  lagged_dt[, 1] <- NULL # to avoid repeating 'num_id' column, drop it
+  final_dt <- cbind(dt, lagged_dt) # possible due to the previous ordering of dt
+  
+  
+  return(final_dt)
+  
+}
 
 
 
