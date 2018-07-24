@@ -130,8 +130,8 @@ get_samples_dts <- function(dt_list, sample_size, frac = FALSE){
 #' time where the client did not report aanything (e.g. was not in the data), it will
 #' appear with NA for all columns besides \code{time_var} and \code{id_var}
 #' @param dt data.table containing a time variable and an id variable
-#' @param time_var Column in \code{dt} representing time
-#' @param id_var Column in \code{dt} representing a an observation (e.g. a client)
+#' @param time_var String. Column in \code{dt} representing time
+#' @param id_var String. Column in \code{dt} representing a an observation (e.g. a client)
 #' 
 complete_id_time <- function(dt, time_var, id_var){
   
@@ -140,6 +140,7 @@ complete_id_time <- function(dt, time_var, id_var){
   ids <- unique(dt[, ..id_var])[[1]]
   
   # Get all possible combinations of id and time
+  # TODO: CJ() function (cross join from data.table) might be more efficient
   all_rows <- expand.grid(dates, ids) %>% as.data.table()
   
   # Rename for easy merging
