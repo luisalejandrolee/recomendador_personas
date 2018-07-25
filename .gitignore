@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-
 data/
 recomendador.nb.html
+00-recomendador.nb.html
+01-plots_and_analysis.nb.html

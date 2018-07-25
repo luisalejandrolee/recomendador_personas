@@ -1,0 +1,149 @@
+---
+title: "Cool Title"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+Standard libraries
+```{r}
+rm(list = ls())
+options(scipen=999) # scientific notation
+
+library(data.table)
+library(ggplot2)
+library(caret)
+library(plotly)
+library(dplyr)
+library(DT)
+library(pander)
+library(plotly)
+library(xts)
+library(reshape2)
+
+#devtools::install_github("luisalejandrolee/utilucho")
+library(utilucho)
+
+#source("scripts/data_cleaning_and_preparation.R")
+
+```
+
+# Import
+
+```{r}
+# File names contain the sample size used. Need for the import (must match
+# a run of the preparation file to save files with this sample)
+sample_size <- 5000
+
+folder <- "data/staging/"
+file_acquisitions <- paste0("acquisitions_n", sample_size, ".csv")
+acquisitions <- fread(paste0(folder, file_acquisitions))
+  
+folder <- "data/staging/"
+file_losses <- paste0("losses_n", sample_size, ".csv")
+losses <- fread(paste0(folder, file_losses))
+```
+
+
+
+# Time series of new and lost products
+```{r}
+
+pl <- acquisitions %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(x = as.Date(periodo), y = value)) +
+  geom_line(aes(colour = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  labs(title = "Número de clientes que aumentaron tenencia")
+  
+
+print(pl)
+
+pl <- losses %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(x = as.Date(periodo), y = value)) +
+  geom_line(aes(colour = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  labs(title = "Número de clientes que disminuyeron tenencia")
+  
+print(pl)
+
+```
+
+# Por mes, disminución y aumento de tenencia
+```{r}
+for (date in unique(as.character(acquisitions$periodo))) {
+  
+  pl <- acquisitions[periodo == date] %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(variable, value, colour = variable)) +
+  geom_bar(stat = "identity", aes(fill = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que aumentaron tenencia",
+       subtitle = paste("Período:", as.character(date)))
+
+  print(pl)
+  
+  
+  pl <- losses[periodo == date] %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(variable, value, colour = variable)) +
+  geom_bar(stat = "identity", aes(fill = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que disminuyeron tenencia",
+       subtitle = paste("Período:", as.character(date)))
+
+  print(pl)
+  
+  }
+
+```
+
+
+# Por producto, disminución y aumento de tenencia
+```{r}
+melted_acquisitions <- acquisitions %>% melt(id.vars = "periodo")
+melted_losses <- losses %>% melt(id.vars = "periodo")
+
+
+for (producto in unique(melted_acquisitions$variable)) {
+  
+  pl <-  melted_acquisitions[variable == producto] %>%
+  ggplot(aes(as.character(periodo), value)) +
+  geom_bar(stat = "identity", aes(fill = factor(periodo))) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que aumentaron tenencia",
+       subtitle = paste("Producto:", producto))
+
+  print(pl)
+  }
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
