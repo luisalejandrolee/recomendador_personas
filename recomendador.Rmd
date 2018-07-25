@@ -45,6 +45,14 @@ all_months <- import_as_list(folder, files)
 
 ```
 
+# Sample date
+```{r}
+# Sample by choosing n clients from the last month, and then retrieve those for
+# previous months
+
+dts_sampled <- get_samples_dts(all_months, 10000, frac = FALSE) # sample data
+```
+
 # Clean data (first stage)
 ```{r}
 
@@ -52,13 +60,13 @@ cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_")
 
 # Make ID as character, remove columns, change PERIODO to date format,
 # and format column names
-clean_dt_in_list(all_months, cols_to_del)
-convert_to_date_all_list(all_months, "periodo")
+clean_dt_in_list(dts_sampled, cols_to_del)
+convert_to_date_all_list(dts_sampled, "periodo")
 
 ```
 
 ```{r}
-all_months[1:3]
+dts_sampled[1:3]
 ```
 
 ```{r}
@@ -71,13 +79,13 @@ all_months[1:3]
 #head(d)
 ```
 
-# Sample data and join all months
+# Join all months
 
 ```{r}
 # Sample by choosing n clients from the last month, and then retrieve those for
 # previous months
 
-dts_sampled <- get_samples_dts(all_months, 1000, frac = FALSE) # sample data
+#dts_sampled <- get_samples_dts(all_months, 1000, frac = FALSE) # sample data
 rm(all_months) # delete non merged datasets
 
 dt <- rbindlist(dts_sampled) # merge all SAMPLED months in a single data.table
@@ -179,16 +187,13 @@ acquisitions
 ```{r}
 
 pl <- acquisitions %>% melt(id.vars = "periodo") %>%
-  ggplot(aes(x = as.Date(as.yearmon(periodo, "%Y_%m"), frac = 1), y = value)) +
+  ggplot(aes(x = periodo, y = value)) +
   geom_line(aes(colour = variable)) +
   scale_x_date()
 
 ggplotly(pl)
 
 
-```
-```{r}
-acquisitions[, .(as.Date(as.yearmon(periodo, "%Y_%m"), frac = 1))]
 ```
 
 

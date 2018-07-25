@@ -46,8 +46,7 @@ convert_to_date_all_list <- function(dt_list, time_var){
 #' a numeric variable as YYYYMM.
 
 convert_to_date <- function(s){
-  # For some reason, this function takes a LONG time to work (I thought it wouldn't)
-  # TODO Any ideas to make it efficient?
+
   years <- substr(s, 1, 4)
   months <- substr(s, 5, 6)
 
@@ -151,6 +150,7 @@ get_samples_dts <- function(dt_list, sample_size, frac = FALSE){
 
 #' In a data.table containing ids and time variables, returns a data.table in which
 #' every id has associated a row with all time periods present in the whole data.
+#' 
 #' @usage This is used so that when lagging a variable the lag is for calendar time. For
 #' example, when including a lag of 1, it is related to the last calendar point in time,
 #' instead of the last point in time in which that id reported something. In points in
