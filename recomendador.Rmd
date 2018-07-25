@@ -50,7 +50,7 @@ all_months <- import_as_list(folder, files)
 # Sample by choosing n clients from the last month, and then retrieve those for
 # previous months
 
-dts_sampled <- get_samples_dts(all_months, 10000, frac = FALSE) # sample data
+dts_sampled <- get_samples_dts(all_months, 50000, frac = FALSE) # sample data
 ```
 
 # Clean data (first stage)
@@ -174,12 +174,11 @@ product,
 # get columns for acquisition (end with '_new')
 
 cols <- grep('_new', names(dt), value=TRUE)
-
-
-
 acquisitions <- dt[, lapply(.SD, sum, na.rm = TRUE), by = periodo, .SDcols = cols]
-acquisitions
 
+
+cols <- grep('_loss', names(dt), value=TRUE)
+losses <- dt[, lapply(.SD, sum, na.rm = TRUE), by = periodo, .SDcols = cols]
 
 #names(dt)
 ```
@@ -190,9 +189,16 @@ pl <- acquisitions %>% melt(id.vars = "periodo") %>%
   ggplot(aes(x = periodo, y = value)) +
   geom_line(aes(colour = variable)) +
   scale_x_date()
+  
 
 ggplotly(pl)
 
+pl <- losses %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(x = periodo, y = value)) +
+  geom_line(aes(colour = variable)) +
+  scale_x_date()
+
+ggplotly(pl)
 
 ```
 
@@ -220,6 +226,10 @@ ggplotly(pl)
 
 
 
+```{r}
+
+
+```
 
 
 
