@@ -66,7 +66,7 @@ convert_to_date_all_list(dts_sampled, "periodo")
 ```
 
 ```{r}
-dts_sampled[1:3]
+#dts_sampled[1:3]
 ```
 
 # Join all months
@@ -150,11 +150,13 @@ dt <- create_lagged_vars(dt, products, lags)
 
 ```{r}
 # choose products to create aqcuisition variables
-products <- products # reminder that products have been defined before. Change if needed
+# Here, products should only contain the ORIGINAL ones (not lagged, etc.)
+products <- products # reminder that products was chosen before. Change if needed
 
 create_acquisition_and_loss(dt, products)
-dt[, .(t_credito, t_credito_lag_1, t_credito_diff, t_credito_new)][order(-t_credito_new)]
+#dt[, .(t_credito, t_credito_lag_1, t_credito_diff, t_credito_new)][order(-t_credito_new)]
 ```
+
 
 # Summarize aqcuisition and loss (counts)
 Print as a data.table with rows = one month, columns = aqcuisition of each 
@@ -197,7 +199,6 @@ pl <- losses %>% melt(id.vars = "periodo") %>%
   
 print(pl)
 
-
 ```
 
 # Por mes, disminución y aumento de tenencia
@@ -228,11 +229,14 @@ for (date in unique(as.character(acquisitions$periodo))) {
   print(pl)
   
   }
+
 ```
+
 # Por producto, disminución y aumento de tenencia
 ```{r}
 melted_acquisitions <- acquisitions %>% melt(id.vars = "periodo")
 melted_losses <- losses %>% melt(id.vars = "periodo")
+
 
 for (producto in unique(melted_acquisitions$variable)) {
   
@@ -249,6 +253,23 @@ for (producto in unique(melted_acquisitions$variable)) {
   }
 ```
 
+
+# Lag again: create acquisition and loss
+
+```{r}
+# Lag variables again, this time the ones indicating new products and lost products
+# Those might be related to lag tenency, but are different and might impact modelling
+
+# Not done before to avoid messing the plotting (it plots vars with "_new" and "_loss")
+cols_new <- grep('_new', names(dt), value=TRUE)
+cols_loss <- grep('_loss', names(dt), value = TRUE)
+cols <- c(cols_new, cols_loss)
+
+dt <- create_lagged_vars(dt, cols, seq(1:3))
+
+
+
+```
 # Save file for modelling
 
 ```{r}
@@ -275,12 +296,6 @@ write.csv(dt, paste0(folder, file))
 
 ```
 
-
-
-```{r}
-
-
-```
 
 
 

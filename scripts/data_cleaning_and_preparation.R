@@ -200,7 +200,7 @@ create_lagged_vars <- function(dt, vars_to_lag, lags){
   
   # Get a separate data.table with all lags for all chosen variables
   lagged_dt <- dt[, shift(.SD, lags, give.names = TRUE), by = num_id,
-                  .SDcols = products]
+                  .SDcols = vars_to_lag]
   
   lagged_dt[, 1] <- NULL # to avoid repeating 'num_id' column, drop it
   final_dt <- cbind(dt, lagged_dt) # possible due to the previous ordering of dt
