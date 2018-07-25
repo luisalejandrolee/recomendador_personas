@@ -173,25 +173,95 @@ losses <- dt[, lapply(.SD, sum, na.rm = TRUE), by = periodo, .SDcols = cols]
 #names(dt)
 ```
 
+# Time series of new and lost products
 ```{r}
 
 pl <- acquisitions %>% melt(id.vars = "periodo") %>%
   ggplot(aes(x = periodo, y = value)) +
   geom_line(aes(colour = variable)) +
-  scale_x_date()
+  scale_x_date() +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  labs(title = "Número de clientes que aumentaron tenencia")
   
 
-ggplotly(pl)
+print(pl)
 
 pl <- losses %>% melt(id.vars = "periodo") %>%
   ggplot(aes(x = periodo, y = value)) +
   geom_line(aes(colour = variable)) +
-  scale_x_date()
+  scale_x_date() +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  labs(title = "Número de clientes que disminuyeron tenencia")
+  
+print(pl)
 
-ggplotly(pl)
 
 ```
 
+# Por mes, disminución y aumento de tenencia
+```{r}
+for (date in unique(as.character(acquisitions$periodo))) {
+  
+  pl <- acquisitions[periodo == date] %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(variable, value, colour = variable)) +
+  geom_bar(stat = "identity", aes(fill = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que aumentaron tenencia",
+       subtitle = paste("Período:", as.character(date)))
+
+  print(pl)
+  
+  
+  pl <- losses[periodo == date] %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(variable, value, colour = variable)) +
+  geom_bar(stat = "identity", aes(fill = variable)) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que disminuyeron tenencia",
+       subtitle = paste("Período:", as.character(date)))
+
+  print(pl)
+  
+  }
+```
+# Por producto, disminución y aumento de tenencia
+```{r}
+melted_acquisitions <- acquisitions %>% melt(id.vars = "periodo")
+melted_losses <- losses %>% melt(id.vars = "periodo")
+
+for (producto in unique(melted_acquisitions$variable)) {
+  
+  pl <-  melted_acquisitions[variable == producto] %>%
+  ggplot(aes(as.character(periodo), value)) +
+  geom_bar(stat = "identity", aes(fill = factor(periodo))) +
+  xlab("Número de clientes") +
+  ylab("Fecha") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Número de clientes que aumentaron tenencia",
+       subtitle = paste("Producto:", producto))
+
+  print(pl)
+  
+
+  
+  }
+```
+
+```{r}
+acquisitions %>% melt(id.vars = "periodo")
+acquisitions[periodo == "2017-06-30",] %>% melt(id.vars = "periodo")
+head(acquisitions$periodo)
+melted_acquisitions
+melted_losses
+```
+```{r}
+
+```
 
 ```{r}
 
