@@ -246,20 +246,15 @@ for (producto in unique(melted_acquisitions$variable)) {
        subtitle = paste("Producto:", producto))
 
   print(pl)
-  
-
-  
   }
 ```
 
+# Save file for modelling
+
 ```{r}
-acquisitions %>% melt(id.vars = "periodo")
-acquisitions[periodo == "2017-06-30",] %>% melt(id.vars = "periodo")
-head(acquisitions$periodo)
-melted_acquisitions
-melted_losses
-```
-```{r}
+folder <- "data/staging/"
+file <- paste0("master_n_", sample_size ,".csv")
+write.csv(dt, paste0(folder, file))
 
 ```
 
@@ -267,11 +262,7 @@ melted_losses
 
 
 
-# create lags for adquisition variables as well
-
-
-
-# Check and analyiza data
+# create lags for adquisition variables as well? Might be captured already by lags
 
 ## check values for each product: max number of products per client
 ## decide if making an upper bound
