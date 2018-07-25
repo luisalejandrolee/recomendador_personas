@@ -27,16 +27,43 @@ import_as_list <- function(folder, files){
 } # end of import_as_list
 
 
-#' Converts "YYYYMM" string into date format. Assumes all strings have same format
-
-convert_to_yearmon <- function(s){
+#' Wrapper for \code{convert_to_date}, to apply it and convert to date format the
+#' time identifier in all data.tables in \code{dt_list}
+#' @param dt_list A list with several data.tables, all in the same format
+#' @param time_var String. A column to convert to date format
+convert_to_date_all_list <- function(dt_list, time_var){
   
+  for(i in 1:length(dt_list)){ # all data.tables in the list
+    # applies custom function to each time_var column in the data.table
+    dt_list[[i]][, (time_var) := convert_to_date(get(time_var))]
+  } # for loop
+  
+} # end of convert_to_date_all_list
+
+
+
+#' Converts "YYYYMM" string into date format. Assumes all strings have same format:
+#' a numeric variable as YYYYMM.
+
+convert_to_date <- function(s){
+  # For some reason, this function takes a LONG time to work (I thought it wouldn't)
+  # TODO Any ideas to make it efficient?
   years <- substr(s, 1, 4)
   months <- substr(s, 5, 6)
-  date <- paste0(years, "_", months)
-  date <- as.yearmon(date, "%Y_%m")
+
+  # converting to date has a trick: yearmon understands it is a date with year and
+  # month. However, many other functions (e.g. ggplot) are used to the traditional
+  # format including a day. For this, the as.Date() transforms the
+  # yearmon object into a date, including the last day of the month. This is perfect
+  # for this data, since the cut for each month to obtein the date is at the end
+  # of the month
+  #my_date <- as.yearmon(my_date, "%Y_%m")
+  #my_date <- as.Date(my_date, frac = 1, origin = "1960-10-01")
   
-  return(date)
+  my_date <- paste0(years, "_", months) %>% as.yearmon("%Y_%m") %>%
+    as.Date(frac = 1, origin = "1960-10-01")
+  
+  return(my_date)
 } # end of convert_to_yearmon
 
 
@@ -49,16 +76,16 @@ convert_to_yearmon <- function(s){
 clean_dt_in_list <- function(dt_list, cols_to_del){
   for(i in 1:length(dt_list)){
     
-    all_months[[i]][, num_id := as.character(num_id)] # convert to character
-    all_months[[i]][, (cols_to_del) := NULL] # delete columns
-    all_months[[i]][, PERIODO := convert_to_yearmon(PERIODO)] #convert to date
+    dt_list[[i]][, num_id := as.character(num_id)] # convert to character
+    dt_list[[i]][, (cols_to_del) := NULL] # delete columns
+    #dt_list[[i]][, PERIODO := convert_to_date(PERIODO)] #convert to date
     
     # format column names (using custom function)
-    old_cols <- names(all_months[[i]]) 
-    setnames(all_months[[i]], old_cols, format_columns(old_cols))
+    old_cols <- names(dt_list[[i]]) 
+    setnames(dt_list[[i]], old_cols, format_columns(old_cols))
     
     # replace NA's with zeros
-    utilucho::input_nas(all_months[[i]], names(all_months[[i]]), "zero")
+    utilucho::input_nas(dt_list[[i]], names(dt_list[[i]]), "zero")
     
   } # for loop
   

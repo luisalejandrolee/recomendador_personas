@@ -23,6 +23,7 @@ library(DT)
 library(pander)
 library(plotly)
 library(xts)
+library(reshape2)
 
 #devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
@@ -52,11 +53,22 @@ cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_")
 # Make ID as character, remove columns, change PERIODO to date format,
 # and format column names
 clean_dt_in_list(all_months, cols_to_del)
+convert_to_date_all_list(all_months, "periodo")
 
 ```
 
 ```{r}
-all_months[[10]]
+all_months[1:3]
+```
+
+```{r}
+#a <- all_months[[10]]$PERIODO
+#b <- convert_to_yearmon(a)
+#head(b)
+#c <- as.yearmon(b, "%Y_%m")
+#head(c)
+#d <- as.Date(c, frac = 1)
+#head(d)
 ```
 
 # Sample data and join all months
@@ -95,6 +107,7 @@ dup <- dt[, duplicated(num_id), by = periodo] # keeps in V1 if duplicated
 dt <- dt[dup$V1 == FALSE] # keep non-duplicated
 rm(dup) # delete duplicates (not needed anymore)
 str(dt)
+#dt[, .N, by = periodo]
 ```
 
 # Feature engineering
@@ -112,6 +125,8 @@ the Shiny app
 
 ```{r}
 # required to do proper lag (as calendar time, not reported time)
+# fills the data.table with entries for all months and all clients (with NA where
+# nothing was reported)
 dt <- complete_id_time(dt, "periodo", "num_id")
 
 #dt[order(num_id, periodo), .N, by = num_id] %>% summary()
@@ -140,19 +155,47 @@ dt <- create_lagged_vars(dt, products, lags)
 products <- products # reminder that products have been defined before. Change if needed
 
 create_acquisition_and_loss(dt, products)
+dt[, .(t_credito, t_credito_lag_1, t_credito_diff, t_credito_new)][order(-t_credito_new)]
 ```
 
 # Summarize aqcuisition and loss (counts)
 Print as a data.table with rows = one month, columns = aqcuisition of each 
 product, 
+```{r}
+
+# get columns for acquisition (end with '_new')
+
+cols <- grep('_new', names(dt), value=TRUE)
+
+
+
+acquisitions <- dt[, lapply(.SD, sum, na.rm = TRUE), by = periodo, .SDcols = cols]
+acquisitions
+
+
+#names(dt)
+```
 
 ```{r}
-# replace nas with zeros (create function. Also make some functions to give give median, etc)
+
+pl <- acquisitions %>% melt(id.vars = "periodo") %>%
+  ggplot(aes(x = as.Date(as.yearmon(periodo, "%Y_%m"), frac = 1), y = value)) +
+  geom_line(aes(colour = variable)) +
+  scale_x_date()
+
+ggplotly(pl)
+
+
+```
+```{r}
+acquisitions[, .(as.Date(as.yearmon(periodo, "%Y_%m"), frac = 1))]
+```
+
+
+```{r}
 
 
 
-# create lag variables for each (create function)
-# create adquisition variables: when there's a new product (as a dummy) and when dropping one
 # create lags for adquisition variables as well
 
 
