@@ -140,7 +140,8 @@ dt <- complete_id_time(dt, "periodo", "num_id")
 
 #products <- c("t_credito", "crediservice")
 products <- names(dt)[3:length(names(dt))] # all variables (except id and periodo)
-lags <- c(1:(length(unique(dt$periodo))-1)) # all possible lags but last one
+#lags <- c(1:(length(unique(dt$periodo))-1)) # all possible lags but last one
+lags <- seq(1:5) # choose lags
 
 dt <- create_lagged_vars(dt, products, lags)
 ```
@@ -225,6 +226,7 @@ write.csv(losses, paste0(folder, file_losses))
 # does it usually happen that when buying a credit card, another product is always owned?
 
 ```
+
 
 
 

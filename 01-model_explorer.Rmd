@@ -24,6 +24,7 @@ library(pander)
 library(plotly)
 library(xts)
 library(reshape2)
+library(arules)
 
 #devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
@@ -53,7 +54,7 @@ dt <- fread(paste0(folder, file_dt))
 ```
 
 ```{r}
-
+dt
 ```
 
 
