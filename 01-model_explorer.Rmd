@@ -1,0 +1,66 @@
+---
+title: "Cool Title"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+Standard libraries
+```{r}
+rm(list = ls())
+options(scipen=999) # scientific notation
+
+library(data.table)
+library(ggplot2)
+library(caret)
+library(plotly)
+library(dplyr)
+library(DT)
+library(pander)
+library(plotly)
+library(xts)
+library(reshape2)
+
+#devtools::install_github("luisalejandrolee/utilucho")
+library(utilucho)
+
+#source("scripts/data_cleaning_and_preparation.R")
+
+```
+
+# Import
+
+```{r}
+# File names contain the sample size used. Need for the import (must match
+# a run of the preparation file to save files with this sample)
+sample_size <- 5000
+
+folder <- "data/staging/"
+file_dt <- paste0("master_n_", sample_size, ".csv")
+dt <- fread(paste0(folder, file_dt))
+
+```
+
+# Cleaning (again, of course)
+```{r}
+# delete V1 (row number included when importing)
+# convert id to character
+# think about conversions for models (start with market basket, then logistic reg)
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
