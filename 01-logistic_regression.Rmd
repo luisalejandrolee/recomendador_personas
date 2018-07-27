@@ -1,0 +1,59 @@
+---
+title: "Cool Title"
+output:
+  html_notebook:
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+Standard libraries
+```{r}
+rm(list = ls())
+options(scipen=999) # scientific notation
+
+library(data.table)
+library(ggplot2)
+library(caret)
+library(plotly)
+library(dplyr)
+library(DT)
+library(pander)
+library(plotly)
+library(xts)
+library(reshape2)
+library(arules)
+
+#devtools::install_github("luisalejandrolee/utilucho")
+library(utilucho)
+
+#source("scripts/data_cleaning_and_preparation.R")
+
+```
+
+# Import
+
+```{r}
+# File names contain the sample size used. Need for the import (must match
+# a run of the preparation file to save files with this sample)
+#sample_size <- 5000
+sample_size <- 100000
+lags <- 2
+
+folder <- "data/staging/"
+file_dt <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
+dt <- fread(paste0(folder, file_dt))
+
+```
+
+# Cleaning for logistic regression
+```{r}
+
+```
+
+
+
+
+
