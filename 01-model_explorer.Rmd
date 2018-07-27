@@ -48,14 +48,51 @@ dt <- fread(paste0(folder, file_dt))
 
 # Cleaning (again, of course)
 ```{r}
-# delete V1 (row number included when importing)
-# convert id to character
+# choose only some interesting "purchases". Related to the models' target variable
+tx <- dt[t_credito_new > 0] # acquired a credit card
+#dt[t_credito_loss > 0] # credit card churn
+
+# delete na's (this means losing months of lag with no data. Could be set to zero)
+tx <- na.omit(tx)
+
+
+cols_to_del <- c("num_id", "periodo")
+tx[, (cols_to_del) := NULL]
+setnames(tx, "V1", "id")
+
+
+# All columns as factors, needed to run the apriori algorithm
+tx[, (names(tx)) := lapply(.SD, as.factor), .SDcols = names(tx)]
+tx
+
 # think about conversions for models (start with market basket, then logistic reg)
 ```
 
+# Market basket analysis
+
 ```{r}
-dt
+rules <- apriori(tx, parameter = list(supp = 0.5, conf = 0.95))
 ```
+
+```{r}
+inspect(rules)
+```
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+
+
+
 
 
 
