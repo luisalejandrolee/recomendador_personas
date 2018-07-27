@@ -37,7 +37,8 @@ library(utilucho)
 ```{r}
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
-sample_size <- 5000
+#sample_size <- 5000
+sample_size <- 100000
 lags <- 2 # max lags included in model. Must match some run done from data_preparation
 
 folder <- "data/staging/"
