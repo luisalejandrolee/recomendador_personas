@@ -30,6 +30,12 @@ library(utilucho)
 source("scripts/data_cleaning_and_preparation.R")
 
 ```
+# Parameters
+```{r}
+sample_size <- 5000 # number of clients (per month)
+lags <- seq(1:2) # choose lags
+```
+
 
 # Import
 
@@ -48,7 +54,6 @@ all_months <- import_as_list(folder, files)
 ```{r}
 # Sample by choosing n clients from the last month, and then retrieve those for
 # previous months
-sample_size <- 5000
 dts_sampled <- get_samples_dts(all_months, sample_size, frac = FALSE) # sample data
 ```
 
@@ -108,17 +113,7 @@ str(dt)
 ```
 
 # Feature engineering
-* subtract t_cred_l1 - t_cred
-* make it binary (1 if >0) and that's the target.
 
-* Repeat the same for all desired products and lags (make a function)
-* Also do without the binary addition, and that's the main feature engineering
-
-For data exploration: 
-* Count number of clients that **aqcuired** (bought) each product
-* Count number of clients that **had** (possesion) each product
-* Put all of it in a matrix of counts (with many columns). That's the input for
-the Shiny app
 
 ```{r}
 # required to do proper lag (as calendar time, not reported time)
@@ -141,7 +136,7 @@ dt <- complete_id_time(dt, "periodo", "num_id")
 #products <- c("t_credito", "crediservice")
 products <- names(dt)[3:length(names(dt))] # all variables (except id and periodo)
 #lags <- c(1:(length(unique(dt$periodo))-1)) # all possible lags but last one
-lags <- seq(1:5) # choose lags
+lags <- lags # reminder that it is chosen at the beggining
 
 dt <- create_lagged_vars(dt, products, lags)
 ```
@@ -197,16 +192,16 @@ dt <- create_lagged_vars(dt, cols, seq(1:3))
 
 # Save master table (for modelling)
 folder <- "data/staging/"
-file_master <- paste0("master_n_", sample_size ,".csv")
+file_master <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
 write.csv(dt, paste0(folder, file_master))
 
 # Save acquisitions (for plotting and analysis)
-file_acquisitions <- paste0("acquisitions_n", sample_size, ".csv")
+file_acquisitions <- paste0("acquisitions_n", sample_size , "_lags", max(lags), ".csv")
 write.csv(acquisitions, paste0(folder, file_acquisitions))
 
 
 # Save losses (for plotting and analysis)
-file_losses <- paste0("losses_n", sample_size, ".csv")
+file_losses <- paste0("losses_n", sample_size , "_lags", max(lags), ".csv")
 write.csv(losses, paste0(folder, file_losses))
 ```
 

@@ -38,13 +38,14 @@ library(utilucho)
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
 sample_size <- 5000
+lags <- 2 # max lags included in model. Must match some run done from data_preparation
 
 folder <- "data/staging/"
-file_acquisitions <- paste0("acquisitions_n", sample_size, ".csv")
+file_acquisitions <- paste0("acquisitions_n", sample_size , "_lags", max(lags), ".csv")
 acquisitions <- fread(paste0(folder, file_acquisitions))
   
 folder <- "data/staging/"
-file_losses <- paste0("losses_n", sample_size, ".csv")
+file_losses <- paste0("losses_n",sample_size , "_lags", max(lags), ".csv")
 losses <- fread(paste0(folder, file_losses))
 ```
 

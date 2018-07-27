@@ -39,9 +39,10 @@ library(utilucho)
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
 sample_size <- 5000
+lags <- 2
 
 folder <- "data/staging/"
-file_dt <- paste0("master_n_", sample_size, ".csv")
+file_dt <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
 dt <- fread(paste0(folder, file_dt))
 
 ```
@@ -55,10 +56,13 @@ tx <- dt[t_credito_new > 0] # acquired a credit card
 # delete na's (this means losing months of lag with no data. Could be set to zero)
 tx <- na.omit(tx)
 
-
+# delete columns not needed for market basket
 cols_to_del <- c("num_id", "periodo")
 tx[, (cols_to_del) := NULL]
-setnames(tx, "V1", "id")
+# rename (just an index)
+setnames(tx, "V1", "id") 
+
+# filter some months?
 
 
 # All columns as factors, needed to run the apriori algorithm
@@ -77,13 +81,9 @@ rules <- apriori(tx, parameter = list(supp = 0.5, conf = 0.95))
 ```{r}
 inspect(rules)
 ```
-```{r}
 
-```
 
-```{r}
 
-```
 
 ```{r}
 
