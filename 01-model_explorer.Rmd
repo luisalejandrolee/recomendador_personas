@@ -53,11 +53,19 @@ dt <- fread(paste0(folder, file_dt))
 tx <- dt[t_credito_new > 0] # acquired a credit card
 #dt[t_credito_loss > 0] # credit card churn
 
+
+
+# Replace zeros with NA
+tx <- as.data.frame(tx)
+tx[tx == 0] <- NA
+tx <- as.data.table(tx)
+
+
 # delete na's (this means losing months of lag with no data. Could be set to zero)
-tx <- na.omit(tx)
+#tx <- na.omit(tx)
 
 # delete columns not needed for market basket
-cols_to_del <- c("num_id", "periodo")
+cols_to_del <- c("num_id", "periodo", "t_credito_diff")
 tx[, (cols_to_del) := NULL]
 # rename (just an index)
 setnames(tx, "V1", "id") 
@@ -67,23 +75,21 @@ setnames(tx, "V1", "id")
 
 # All columns as factors, needed to run the apriori algorithm
 tx[, (names(tx)) := lapply(.SD, as.factor), .SDcols = names(tx)]
-tx
 
-# think about conversions for models (start with market basket, then logistic reg)
+
 ```
 
 # Market basket analysis
 
 ```{r}
-rules <- apriori(tx, parameter = list(supp = 0.5, conf = 0.95))
+rules <- apriori(tx, parameter = list(supp = 0.2, conf = 0.85, maxlen = 3),
+                 appearance = list(rhs="t_credito_new=1"))
+#?apriori
 ```
 
 ```{r}
 inspect(rules)
 ```
-
-
-
 
 ```{r}
 
