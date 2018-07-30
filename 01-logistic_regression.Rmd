@@ -52,15 +52,30 @@ file_dt <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
 dt <- fread(paste0(folder, file_dt))
 
 ```
+# Missing values
+
+```{r}
+# remove all na's
+dt <- na.omit(dt)
+
+```
 
 # Train and test split
 
 ```{r}
 # columns not to be included in the regression
-x_cols <- names(dt)[!(names(dt) %in% c("V1", "periodo", "num_id"))]
+all_cols <- names(dt)[!(names(dt) %in% c("V1", "periodo", "num_id"))]
 # target variable
-y_col <- "t_credito_new"
+y_cols <- "t_credito_new"
+dt[, (y_cols) := lapply(.SD, as.factor), .SDcols = y_cols] # convert to factor
 
+# all predictor variables (all except the target)
+x_cols <- all_cols[!(all_cols %in% y_cols)]
+
+#length(names(dt))
+#length(all_cols)
+#length(x_cols)
+#length(y_cols)
 
 # months to use as test
 test_months <- c("2018-06-30")
@@ -73,14 +88,19 @@ train_months <- months[!(months %in% test_months)] # all months but for test
 # future purchases to predict past ones (for example, client A in August for training,
 # and same client A in July for testing)
 
-# train split: x for explanatory variables, y for target
+# complete training and test set (including x and y), used for traditional logit regression
+train_full <- dt[periodo %in% train_months, .SD, .SDcols = all_cols]
+test_full <- dt[periodo %in% test_months, .SD, .SDcols = all_cols]
+
+# separate predictors (x) vs target (y) for lasso (glmnet) regression
 train_x <- dt[periodo %in% train_months, .SD, .SDcols = x_cols]
-train_y <- dt[periodo %in% train_months, lapply(.SD, as.factor), .SDcols = y_col]
+train_y <- dt[periodo %in% train_months, lapply(.SD, as.factor), .SDcols = y_cols]
 
 # test split: x for explanatory, y for target
 test_x <- dt[periodo %in% test_months, .SD, .SDcols = x_cols]
-test_y <- dt[periodo %in% test_months, lapply(.SD, as.factor), .SDcols = y_col]
+test_y <- dt[periodo %in% test_months, lapply(.SD, as.factor), .SDcols = y_cols]
 
+#ncol(train_full)
 #train_x
 #train_y
 
@@ -89,9 +109,46 @@ test_y <- dt[periodo %in% test_months, lapply(.SD, as.factor), .SDcols = y_col]
 ```
 
 ```{r}
+train_full[t_credito_new == "1", .(t_credito_new)]
+```
 
+# Logistic regression
+
+```{r}
+
+fit1_logit <- glm(data = train_full, t_credito_new ~., family = "binomial",
+                  control = list(maxit = 50))
+
+```
+```{r}
+summary(fit1_logit)
+```
+
+```{r}
+delme_logit <- glm(data = train_full, t_credito_new ~ nomina + nomina_lag_1 + nomina_lag_2,
+                   family = "binomial")
+summary(delme_logit)
+```
+
+```{r}
+delme_logit <- glm(data = train_full, get("t_credito_new") ~ 
+                     nomina + nomina_lag_1 + nomina_lag_2 + constructor + constructor_lag_1 + constructor_lag_2 +
+                     ,
+                   family = "binomial")
+summary(delme_logit)
+```
+
+```{r}
+#fit1_lasso <- glmnet(as.matrix(train_x), as.matrix(train_y), alpha = 1)
+
+
+#cv_out <- cv.glmnet(as.matrix(train_x), as.matrix(train_y), alpha=1,
+#                   family= "binomial",type.measure = "mse" )
 ```
 
 
+```{r}
+
+```
 
 
