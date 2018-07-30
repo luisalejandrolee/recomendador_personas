@@ -25,6 +25,11 @@ library(plotly)
 library(xts)
 library(reshape2)
 library(arules)
+library(glmnet)
+library(mlbench)
+
+
+
 
 #devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
@@ -48,11 +53,44 @@ dt <- fread(paste0(folder, file_dt))
 
 ```
 
-# Cleaning for logistic regression
+# Train and test split
+
+```{r}
+# columns not to be included in the regression
+x_cols <- names(dt)[!(names(dt) %in% c("V1", "periodo", "num_id"))]
+# target variable
+y_col <- "t_credito_new"
+
+
+# months to use as test
+test_months <- c("2018-06-30")
+# train months are all but the ones chosen for test
+months <- unique(dt$periodo) # all months in data
+train_months <- months[!(months %in% test_months)] # all months but for test
+
+# notice that splits below are not done randomly. This is due to having time
+# series variables. If done randomly, one would have the model observing data of
+# future purchases to predict past ones (for example, client A in August for training,
+# and same client A in July for testing)
+
+# train split: x for explanatory variables, y for target
+train_x <- dt[periodo %in% train_months, .SD, .SDcols = x_cols]
+train_y <- dt[periodo %in% train_months, lapply(.SD, as.factor), .SDcols = y_col]
+
+# test split: x for explanatory, y for target
+test_x <- dt[periodo %in% test_months, .SD, .SDcols = x_cols]
+test_y <- dt[periodo %in% test_months, lapply(.SD, as.factor), .SDcols = y_col]
+
+#train_x
+#train_y
+
+#test_x
+#test_y
+```
+
 ```{r}
 
 ```
-
 
 
 
