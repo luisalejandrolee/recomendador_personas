@@ -60,7 +60,7 @@ dts_sampled <- get_samples_dts(all_months, sample_size, frac = FALSE) # sample d
 # Clean data (first stage)
 ```{r}
 
-cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_")
+cols_to_del <- c("TIPO_ID", "tipo_id2", "_NAME_", "CONSTRUCTOR")
 
 # Make ID as character, remove columns, change PERIODO to date format,
 # and format column names
@@ -173,15 +173,18 @@ losses <- dt[, lapply(.SD, sum, na.rm = TRUE), by = periodo, .SDcols = cols]
 # Lag again: create acquisition and loss
 
 ```{r}
+# All this chunk is commented: after some tests with a logistic regression,
+# the colinearity of this variables hurts the model, so better not to include them
+
 # Lag variables again, this time the ones indicating new products and lost products
 # Those might be related to lag tenency, but are different and might impact modelling
 
 # Not done before to avoid messing the plotting (it plots vars with "_new" and "_loss")
-cols_new <- grep('_new', names(dt), value=TRUE)
-cols_loss <- grep('_loss', names(dt), value = TRUE)
-cols <- c(cols_new, cols_loss)
+#cols_new <- grep('_new', names(dt), value=TRUE)
+#cols_loss <- grep('_loss', names(dt), value = TRUE)
+#cols <- c(cols_new, cols_loss)
 
-dt <- create_lagged_vars(dt, cols, lags)
+#dt <- create_lagged_vars(dt, cols, lags)
 
 
 
