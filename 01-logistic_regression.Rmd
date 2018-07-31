@@ -63,6 +63,10 @@ variables intended to be the target
 # target to keep (so exclude from general removal of variables below)
 target_var <- "t_credito_new"
 
+# needed to use the caret functions ( 0 and 1 are not possible variable names,
+# and caret needs the levels in the factors to be possible variable names)
+dt[, (target_var) := ifelse(get(target_var) == 1, "yes", "no")]
+
 # manual removal. Key here to avoid the lag_1 of the target var (perfect collinearity)
 cols_manual <- "t_credito_lag_1"
 
@@ -165,13 +169,13 @@ glm_prob <- predict.glm(object = fit1_logit, newdata = test_x, type = "response"
 #make classifications predictions based on probability
 
 ## threshold on probability to decide on class
-glm_predict <- ifelse(glm_prob > 0.5, 1, 0)
+glm_predict <- ifelse(glm_prob > 0.5, "yes", "no")
 
 # use caret to do both the confusion matrix and print some stats
 confusionMatrix(as.factor(glm_predict), test_y$t_credito_new)
 
 # use caTools package to plot ROC curve
-colAUC(glm_predict, test_y$t_credito_new, plotROC = TRUE)
+colAUC(glm_prob, test_y$t_credito_new, plotROC = TRUE)
 
 
 #test_y[t_credito_new==1]
@@ -211,9 +215,7 @@ the length of the tree (but caret doesn't do it automatically)
 mtry is by default chosen in caret (tuneLength = 3  means try 3 different values
 for mtry, and choose the best one)
 ```{r}
-# needed to use the caret functions ( 0 and 1 are not possible variable names,
-# and caret needs the levels in the factors to be possible variable names)
-train_full$t_credito_new <- ifelse(train_full$t_credito_new == "0", "no", "yes")
+#train_full$t_credito_new <- ifelse(train_full$t_credito_new == "0", "no", "yes")
 
 # Fit random forest: model
 ## tuneLenght auto tunes default parameters for chosen model. For random forest,
@@ -226,22 +228,33 @@ randfor_model_default <- train(
   trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
                            summaryFunction = twoClassSummary, classProbs = TRUE)
 )
-
-# Print model to console
-print(randfor_model_default)
-
-# Plot model
-plot(randfor_model_default)
 ```
 ## Save the model
 ```{r}
 models_path <- "data/models/"
 model_name <- "rforest_default_tuning_3.rds"
-saveRDS(randfor_model_default, paste0(models_path, model_name))
-
-
-#my_model <- readRDS("model.rds")
+#saveRDS(randfor_model_default, paste0(models_path, model_name))
 ```
+
+## Load model
+```{r}
+models_path <- "data/models/"
+model_name <- "rforest_default_tuning_3.rds"
+randfor_model_default <- readRDS(paste0(models_path, model_name))
+
+```
+
+## Check model
+```{r}
+# Print model to console
+print(randfor_model_default)
+
+# Plot model
+plot(randfor_model_default)
+
+```
+
+
 
 ## Detailed cross validation, custom grid tuning
 tuneLength allows auto tuning of the parameters with chosen values by the caret package creator.
