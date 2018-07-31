@@ -27,8 +27,8 @@ library(reshape2)
 library(arules)
 library(glmnet)
 library(mlbench)
-
-
+library(pROC)
+library(caTools)
 
 
 #devtools::install_github("luisalejandrolee/utilucho")
@@ -139,10 +139,12 @@ test_y <- dt[periodo %in% test_months, lapply(.SD, as.factor), .SDcols = y_cols]
 
 ```{r}
 train_full[t_credito_new == "1", .(t_credito_new)]
+train_full
 ```
 
 # Logistic regression
 
+## Fit model
 ```{r}
 
 fit1_logit <- glm(data = train_full, t_credito_new ~., family = "binomial",
@@ -150,12 +152,38 @@ fit1_logit <- glm(data = train_full, t_credito_new ~., family = "binomial",
 
 summary(fit1_logit)
 ```
+## Confusion matrix, ROC curve and AUC
+```{r}
+#predict probabilities on testset
+#type=”response” gives probabilities, type=”class” gives class
+glm_prob <- predict.glm(object = fit1_logit, newdata = test_x, type = "response")
+#summary(glm_prob)
+#make classifications predictions based on probability
+
+## threshold on probability to decide on class
+glm_predict <- ifelse(glm_prob > 0.5, 1, 0)
+
+# use caret to do both the confusion matrix and print some stats
+confusionMatrix(as.factor(glm_predict), test_y$t_credito_new)
+
+# use caTools package to plot ROC curve
+colAUC(glm_predict, test_y$t_credito_new, plotROC = TRUE)
+
+
+#test_y[t_credito_new==1]
+#glm_predict
+#glm_predict == test_y$t_credito_new
+```
 
 
 ```{r}
+
+```
+
+```{r}
 #fit1_lasso <- glmnet(as.matrix(train_x), as.matrix(train_y), alpha = 1)
-
-
+#fit1_lasso
+#coef.glmnet()
 #cv_out <- cv.glmnet(as.matrix(train_x), as.matrix(train_y), alpha=1,
 #                   family= "binomial",type.measure = "mse" )
 ```
