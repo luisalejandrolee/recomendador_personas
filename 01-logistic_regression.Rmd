@@ -46,8 +46,8 @@ library(utilucho)
 ```{r}
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
-#sample_size <- 5000
-sample_size <- 100000
+sample_size <- 5000
+#sample_size <- 100000
 lags <- 2
 
 folder <- "data/staging/"
@@ -254,19 +254,8 @@ plot(randfor_model_default)
 
 ```
 
-
-
-## Parallel cross validation, custom grid tuning
-tuneLength allows auto tuning of the parameters with chosen values by the caret package creator.
-tuneGrid allows specifying the values for each parameter (but also can only tune some 
-parameters, not all). For random forest, only mtry can be tuned
+# Cross validation, custom grid tuning
 ```{r}
-# do paralell computing (use all cores but one)
-cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
-registerDoParallel(cluster)
-
-start_time <- Sys.time()
-
 # Fit random forest: model
 randfor_model_custom <- train(
   t_credito_new ~.,
@@ -275,46 +264,16 @@ randfor_model_custom <- train(
                         min.node.size = 1),
   data = train_full, method = "ranger",
   trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
-                           summaryFunction = twoClassSummary, classProbs = TRUE,
-                           allowParallel = TRUE)
+                           summaryFunction = twoClassSummary, classProbs = TRUE)
 )
 
-end_time <- Sys.time()
-print(paste0("Total time running = ", end_time - start_time))
-
-# go back to non-parallel processing
-stopCluster(cluster) # stop the cluster
-registerDoSEQ() # force R to go back to single thread processing
-
 ```
-
 ```{r}
 # Print model to console
 print(randfor_model_custom)
 
 # Plot model
 plot(randfor_model_custom)
-```
-
-# Non paralell cross validation, custom grid tuning
-```{r}
-
-start_time <- Sys.time()
-
-# Fit random forest: model
-randfor_model_custom <- train(
-  t_credito_new ~.,
-  tuneGrid = data.frame(mtry = c(2),
-                        splitrule = "gini",
-                        min.node.size = 1),
-  data = train_full, method = "ranger",
-  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
-                           summaryFunction = twoClassSummary, classProbs = TRUE,
-                           allowParallel = TRUE)
-)
-
-end_time <- Sys.time()
-print(paste0("Total time running = ", end_time - start_time))
 ```
 
 ```{r}
