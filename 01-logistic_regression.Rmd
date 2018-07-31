@@ -30,8 +30,6 @@ library(mlbench)
 library(pROC)
 library(caTools)
 library(ranger)
-library(parallel)
-library(doParallel)
 
 
 #devtools::install_github("luisalejandrolee/utilucho")
