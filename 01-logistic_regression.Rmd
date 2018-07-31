@@ -52,6 +52,35 @@ file_dt <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
 dt <- fread(paste0(folder, file_dt))
 
 ```
+# Remove some variables
+Due to collineatiry. Particularly, the "diff", "new" and " loss" which are already captured
+by the "lag_1" variables. Careful here, because one must keep some "loss" or "new"
+variables intended to be the target
+```{r}
+# target to keep (so exclude from general removal of variables below)
+target_var <- "t_credito_new"
+
+# manual removal. Key here to avoid the lag_1 of the target var (perfect collinearity)
+cols_manual <- "t_credito_lag_1"
+
+# remove all variables that by construction will probably have perfecto collinearity
+# with other regressors
+cols_diff <- grep('_diff', names(dt), value = TRUE)
+cols_new <- grep('_new', names(dt), value = TRUE)
+cols_loss <- grep('_loss', names(dt), value = TRUE)
+
+# put all groups together, but avoid removing the target_var
+cols_remove <- c(cols_diff, cols_new, cols_loss, cols_manual)
+cols_remove <- cols_remove[!(cols_remove %in% target_var)]
+
+# finally remove the chosen columns
+dt[, (cols_remove) := NULL]
+
+#cols_remove
+#names(dt)
+```
+
+
 # Missing values
 
 ```{r}
@@ -66,7 +95,7 @@ dt <- na.omit(dt)
 # columns not to be included in the regression
 all_cols <- names(dt)[!(names(dt) %in% c("V1", "periodo", "num_id"))]
 # target variable
-y_cols <- "t_credito_new"
+y_cols <- target_var
 dt[, (y_cols) := lapply(.SD, as.factor), .SDcols = y_cols] # convert to factor
 
 # all predictor variables (all except the target)
@@ -119,24 +148,9 @@ train_full[t_credito_new == "1", .(t_credito_new)]
 fit1_logit <- glm(data = train_full, t_credito_new ~., family = "binomial",
                   control = list(maxit = 50))
 
-```
-```{r}
 summary(fit1_logit)
 ```
 
-```{r}
-delme_logit <- glm(data = train_full, t_credito_new ~ nomina + nomina_lag_1 + nomina_lag_2,
-                   family = "binomial")
-summary(delme_logit)
-```
-
-```{r}
-delme_logit <- glm(data = train_full, get("t_credito_new") ~ 
-                     nomina + nomina_lag_1 + nomina_lag_2 + constructor + constructor_lag_1 + constructor_lag_2 +
-                     ,
-                   family = "binomial")
-summary(delme_logit)
-```
 
 ```{r}
 #fit1_lasso <- glmnet(as.matrix(train_x), as.matrix(train_y), alpha = 1)
