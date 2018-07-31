@@ -44,8 +44,8 @@ library(utilucho)
 ```{r}
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
-sample_size <- 5000
-#sample_size <- 100000
+#sample_size <- 5000
+sample_size <- 100000
 lags <- 2
 
 folder <- "data/staging/"
@@ -170,7 +170,7 @@ glm_prob <- predict.glm(object = fit1_logit, newdata = test_x, type = "response"
 glm_predict <- ifelse(glm_prob > 0.5, "yes", "no")
 
 # use caret to do both the confusion matrix and print some stats
-confusionMatrix(as.factor(glm_predict), test_y$t_credito_new)
+confusionMatrix(as.factor(glm_predict), test_y$t_credito_new, positive = "yes")
 
 # use caTools package to plot ROC curve
 colAUC(glm_prob, test_y$t_credito_new, plotROC = TRUE)
@@ -219,13 +219,13 @@ for mtry, and choose the best one)
 ## tuneLenght auto tunes default parameters for chosen model. For random forest,
 ## it tunes mtry (number of features randomly chosen for growing each tree)
 ## twoClassSummary indicates using AUC for model selection (vs. accuracy which is default)
-randfor_model_default <- train(
-  t_credito_new ~.,
-  tuneLength = 2,
-  data = train_full, method = "ranger",
-  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
-                           summaryFunction = twoClassSummary, classProbs = TRUE)
-)
+#randfor_model_default <- train(
+ # t_credito_new ~.,
+  #tuneLength = 2,
+  #data = train_full, method = "ranger",
+  #trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
+                           #summaryFunction = twoClassSummary, classProbs = TRUE)
+#)
 ```
 ## Save the model
 ```{r}
@@ -250,36 +250,71 @@ print(randfor_model_default)
 # Plot model
 plot(randfor_model_default)
 
+#predict probabilities on testset
+#type=”response” gives probabilities, type=”class” gives class
+probs_rforest <- predict(object= randfor_model_default, newdata = test_x, type = "prob")
+
+#make classifications predictions based on probability
+
+## threshold on probability to decide on class
+#preds_rforest <- ifelse(probs$yes > 0.01, "yes", "no")
+
+# use caret to do both the confusion matrix and print some stats
+#print(confusionMatrix(as.factor(predictions), test_y$t_credito_new,
+ #                     positive = "yes", mode = "sens_spec"))
+
+# use caTools package to plot ROC curve
+roc_rforest <- roc(test_y$t_credito_new, probs_rforest$yes)
+plot(roc_rforest)
 ```
 
-# Cross validation, custom grid tuning
+# Xgboost, custom grid tuning
 ```{r}
 # Fit random forest: model
-randfor_model_custom <- train(
-  t_credito_new ~.,
-  tuneGrid = data.frame(mtry = c(2),
-                        splitrule = "gini",
-                        min.node.size = 1),
-  data = train_full, method = "ranger",
-  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
-                           summaryFunction = twoClassSummary, classProbs = TRUE)
+my_control = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
+                         summaryFunction = twoClassSummary, classProbs = TRUE)
+
+xgb_model <- train(t_credito_new ~.,
+                   data = train_full,
+                   method = "xgbTree",
+                   tuneLength = 1,
+                   trControl = my_control
 )
 
+
+xgb_model
 ```
 ```{r}
 # Print model to console
-print(randfor_model_custom)
+print(xgb_model)
 
 # Plot model
-plot(randfor_model_custom)
+plot(xgb_model)
+
+#predict probabilities on testset
+#type=”response” gives probabilities, type=”class” gives class
+probs_xgb <- predict(object= xgb_model, newdata = test_x, type = "prob")
+
+#make classifications predictions based on probability
+
+## threshold on probability to decide on class
+#preds_rforest <- ifelse(probs$yes > 0.01, "yes", "no")
+
+# use caret to do both the confusion matrix and print some stats
+#print(confusionMatrix(as.factor(predictions), test_y$t_credito_new,
+ #                     positive = "yes", mode = "sens_spec"))
+
+# use caTools package to plot ROC curve
+roc_xgb <- roc(test_y$t_credito_new, probs_xgb$yes)
+plot(roc_xgb)
 ```
 
 ```{r}
-
+test_y[, .N, by = t_credito_new]
 ```
 
 ```{r}
-
+(267/95551) * 100
 ```
 
 ```{r}
@@ -315,6 +350,30 @@ For unbalanced:
 
 # Print maximum ROC statistic
 #max(model[["results"]]["ROC"])
+```
+
+
+
+```{r}
+set.seed(1)
+simulated <- data.frame(obs = factor(rep(letters[1:2], each = 100)),
+                        perfect = sort(runif(200), decreasing = TRUE),
+                        random = runif(200))
+
+lift1 <- lift(obs ~ random, data = simulated)
+lift1
+plot(lift1)
+
+
+lift2 <- lift(obs ~ random + perfect, data = simulated)
+lift2
+xyplot(lift2, auto.key = list(columns = 2))
+
+xyplot(lift2, auto.key = list(columns = 2), value = c(10, 30))
+
+xyplot(lift2, plot = "lift", auto.key = list(columns = 2))
+
+lift1$data
 ```
 
 
