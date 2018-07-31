@@ -29,6 +29,9 @@ library(glmnet)
 library(mlbench)
 library(pROC)
 library(caTools)
+library(ranger)
+library(parallel)
+library(doParallel)
 
 
 #devtools::install_github("luisalejandrolee/utilucho")
@@ -145,6 +148,7 @@ train_full
 # Logistic regression
 
 ## Fit model
+
 ```{r}
 
 fit1_logit <- glm(data = train_full, t_credito_new ~., family = "binomial",
@@ -186,6 +190,7 @@ AUC is more useful for comparing models, selecting among them when tuning parame
 Hence, usually what is found for AUC uses caret's trainControl object, to try different
 models.
 
+
 Next steps:
 
 * Try other models to deal with unbalanced class
@@ -193,8 +198,84 @@ Next steps:
   
   * Try cross validation (use trainControl) to select regularization term.
   I don't trust it much (since I have time series) but worth trying and learning from it
-```{r}
 
+# Random forest
+
+Notice that the logistic regression is simple in the sense that it doesn't have
+any hyperparametres to tune. The next model would be a random forest, for which the
+main parameter is "mtry" (number of explanatory variables to randomly try at each split 
+of each tree). Caret chooses this parameter automatically. The other parameter is 
+the length of the tree (but caret doesn't do it automatically)
+
+## Simple cross validation, auto tuning
+mtry is by default chosen in caret (tuneLength = 3  means try 3 different values
+for mtry, and choose the best one)
+```{r}
+# needed to use the caret functions ( 0 and 1 are not possible variable names,
+# and caret needs the levels in the factors to be possible variable names)
+train_full$t_credito_new <- ifelse(train_full$t_credito_new == "0", "no", "yes")
+
+# Fit random forest: model
+## tuneLenght auto tunes default parameters for chosen model. For random forest,
+## it tunes mtry (number of features randomly chosen for growing each tree)
+## twoClassSummary indicates using AUC for model selection (vs. accuracy which is default)
+randfor_model_default <- train(
+  t_credito_new ~.,
+  tuneLength = 2,
+  data = train_full, method = "ranger",
+  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
+                           summaryFunction = twoClassSummary, classProbs = TRUE)
+)
+
+# Print model to console
+print(randfor_model_default)
+
+# Plot model
+plot(randfor_model_default)
+```
+## Save the model
+```{r}
+models_path <- "data/models/"
+model_name <- "rforest_default_tuning_3.rds"
+saveRDS(randfor_model_default, paste0(models_path, model_name))
+
+
+#my_model <- readRDS("model.rds")
+```
+
+## Detailed cross validation, custom grid tuning
+tuneLength allows auto tuning of the parameters with chosen values by the caret package creator.
+tuneGrid allows specifying the values for each parameter (but also can only tune some 
+parameters, not all). For random forest, only mtry can be tuned
+```{r}
+# do paralell computing (use all cores but one)
+cluster <- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
+registerDoParallel(cluster)
+
+start_time <- Sys.time()
+
+# Fit random forest: model
+randfor_model_custom <- train(
+  t_credito_new ~.,
+  tuneGrid = data.frame(mtry = c(2)),
+  data = train_full, method = "ranger",
+  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
+                           summaryFunction = twoClassSummary, classProbs = TRUE,
+                           allowParallel = TRUE)
+)
+
+end_time <- Sys.time()
+print(paste0("Total time running = ", end_time - start_time))
+
+# go back to non-parallel processing
+stopCluster(cluster) # stop the cluster
+registerDoSEQ() # force R to go back to single thread processing
+
+# Print model to console
+print(randfor_model_custom)
+
+# Plot model
+plot(randfor_model_custom)
 ```
 
 ```{r}
@@ -204,10 +285,33 @@ Next steps:
 #cv_out <- cv.glmnet(as.matrix(train_x), as.matrix(train_y), alpha=1,
 #                   family= "binomial",type.measure = "mse" )
 ```
-
-
+# glmnet regression
+For unbalanced:
+* decision trees
+* penalized models (lassso,ridge, xgboost)
+* get more data, and sub-sample keeping all those new positive observations
 ```{r}
+# Create custom trainControl: myControl
+#myControl <- trainControl(
+  #method = "cv", number = 10,
+  #summaryFunction = twoClassSummary,
+  #classProbs = TRUE, # IMPORTANT!
+  #verboseIter = TRUE
+#)
 
+# Fit glmnet model: model
+#model <- train(
+  #y ~., data = overfit,
+  #method = "glmnet",
+  #trControl = myControl
+#)
+
+# Print model to console
+#print(model)
+
+# Print maximum ROC statistic
+#max(model[["results"]]["ROC"])
 ```
+
 
 
