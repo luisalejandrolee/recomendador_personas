@@ -174,8 +174,25 @@ colAUC(glm_predict, test_y$t_credito_new, plotROC = TRUE)
 #glm_predict
 #glm_predict == test_y$t_credito_new
 ```
+## Conclusions on traditional logistic
 
+The model is highly unbalanced making the use of other models necessary.
 
+The naive prediction (no one buys a credit card) gives over 99 percent accuracy 
+(the "No information Rate" measure)
+
+One could calculate the AUC, but is generally not so useful for just one model. The
+AUC is more useful for comparing models, selecting among them when tuning parameters.
+Hence, usually what is found for AUC uses caret's trainControl object, to try different
+models.
+
+Next steps:
+
+* Try other models to deal with unbalanced class
+  * LASSO and Random Forest (datacamp has the course in that same order)
+  
+  * Try cross validation (use trainControl) to select regularization term.
+  I don't trust it much (since I have time series) but worth trying and learning from it
 ```{r}
 
 ```
