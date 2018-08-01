@@ -30,13 +30,13 @@ library(mlbench)
 library(pROC)
 library(caTools)
 library(ranger)
-
+library(gains)
 
 #devtools::install_github("luisalejandrolee/utilucho")
 library(utilucho)
 
 #source("scripts/data_cleaning_and_preparation.R")
-
+source("scripts/models_measures.R")
 ```
 
 # Import
@@ -44,8 +44,8 @@ library(utilucho)
 ```{r}
 # File names contain the sample size used. Need for the import (must match
 # a run of the preparation file to save files with this sample)
-#sample_size <- 5000
-sample_size <- 100000
+sample_size <- 5000
+#sample_size <- 100000
 lags <- 2
 
 folder <- "data/staging/"
@@ -53,6 +53,8 @@ file_dt <- paste0("master_n", sample_size , "_lags", max(lags), ".csv")
 dt <- fread(paste0(folder, file_dt))
 
 ```
+
+
 # Remove some variables
 Due to collineatiry. Particularly, the "diff", "new" and " loss" which are already captured
 by the "lag_1" variables. Careful here, because one must keep some "loss" or "new"
@@ -66,7 +68,8 @@ target_var <- "t_credito_new"
 dt[, (target_var) := ifelse(get(target_var) == 1, "yes", "no")]
 
 # manual removal. Key here to avoid the lag_1 of the target var (perfect collinearity)
-cols_manual <- "t_credito_lag_1"
+cols_manual <- c()
+#cols_manual <- "t_credito_lag_1"
 
 # remove all variables that by construction will probably have perfecto collinearity
 # with other regressors
@@ -91,14 +94,20 @@ dt[, (cols_remove) := NULL]
 ```{r}
 # remove all na's
 dt <- na.omit(dt)
-
 ```
 
 # Train and test split
 
 ```{r}
 # columns not to be included in the regression
-all_cols <- names(dt)[!(names(dt) %in% c("V1", "periodo", "num_id"))]
+to_exclude <- c("V1", "periodo", "num_id", "nomina", "t_credito", "ahorros",
+                "corriente", "crediservice", "cdt", "ordinario", "libranza", "libredestino",
+                "otros", "vehiculo", "vivienda", "fomento", "microcredito", "leasing",
+                "activo_pyme", "constructor")
+
+to_exclude <- c("V1", "periodo", "num_id", "t_credito")
+
+all_cols <- names(dt)[!(names(dt) %in% to_exclude)]
 # target variable
 y_cols <- target_var
 dt[, (y_cols) := lapply(.SD, as.factor), .SDcols = y_cols] # convert to factor
@@ -219,13 +228,13 @@ for mtry, and choose the best one)
 ## tuneLenght auto tunes default parameters for chosen model. For random forest,
 ## it tunes mtry (number of features randomly chosen for growing each tree)
 ## twoClassSummary indicates using AUC for model selection (vs. accuracy which is default)
-#randfor_model_default <- train(
- # t_credito_new ~.,
-  #tuneLength = 2,
-  #data = train_full, method = "ranger",
-  #trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
-                           #summaryFunction = twoClassSummary, classProbs = TRUE)
-#)
+randfor_model_default <- train(
+  t_credito_new ~.,
+  tuneLength = 2,
+  data = train_full, method = "ranger",
+  trControl = trainControl(method = "cv", number = 2, verboseIter = TRUE, 
+                           summaryFunction = twoClassSummary, classProbs = TRUE)
+)
 ```
 ## Save the model
 ```{r}
@@ -238,7 +247,7 @@ model_name <- "rforest_default_tuning_3.rds"
 ```{r}
 models_path <- "data/models/"
 model_name <- "rforest_default_tuning_3.rds"
-randfor_model_default <- readRDS(paste0(models_path, model_name))
+#randfor_model_default <- readRDS(paste0(models_path, model_name))
 
 ```
 
@@ -254,18 +263,27 @@ plot(randfor_model_default)
 #type=”response” gives probabilities, type=”class” gives class
 probs_rforest <- predict(object= randfor_model_default, newdata = test_x, type = "prob")
 
-#make classifications predictions based on probability
-
-## threshold on probability to decide on class
-#preds_rforest <- ifelse(probs$yes > 0.01, "yes", "no")
-
-# use caret to do both the confusion matrix and print some stats
-#print(confusionMatrix(as.factor(predictions), test_y$t_credito_new,
- #                     positive = "yes", mode = "sens_spec"))
-
-# use caTools package to plot ROC curve
+# plot ROC curve
 roc_rforest <- roc(test_y$t_credito_new, probs_rforest$yes)
 plot(roc_rforest)
+
+# plot best threshold and accuracy
+result_coords <- coords(roc_rforest, "best", best.method="closest.topleft",
+                        ret=c("threshold", "accuracy"))
+print(result_coords)#to get threshold and accuracy
+
+## uplift and gains
+# gets a table with relevant data
+lift_data_rforest <- calculate_lift_table(depvar = ifelse(test_y$t_credito_new == "yes", 1, 0),
+                                  predcol = probs_rforest$yes)
+
+# print bars
+temp <- lift_data_rforest %>% melt(id.vars = c("bucket"))
+temp <- as.data.table(temp)
+ggplot(temp[variable == "Cumlift"], aes(x = bucket, y = value, fill = variable)) +
+  geom_bar(stat = "identity") +
+  ylab("Cumulative lift (Uplift") + 
+  xlab("Bucket")
 ```
 
 # Xgboost, custom grid tuning
@@ -281,8 +299,6 @@ xgb_model <- train(t_credito_new ~.,
                    trControl = my_control
 )
 
-
-xgb_model
 ```
 ```{r}
 # Print model to console
@@ -295,27 +311,43 @@ plot(xgb_model)
 #type=”response” gives probabilities, type=”class” gives class
 probs_xgb <- predict(object= xgb_model, newdata = test_x, type = "prob")
 
-#make classifications predictions based on probability
 
-## threshold on probability to decide on class
-#preds_rforest <- ifelse(probs$yes > 0.01, "yes", "no")
-
-# use caret to do both the confusion matrix and print some stats
-#print(confusionMatrix(as.factor(predictions), test_y$t_credito_new,
- #                     positive = "yes", mode = "sens_spec"))
-
-# use caTools package to plot ROC curve
+# plot ROC curve
 roc_xgb <- roc(test_y$t_credito_new, probs_xgb$yes)
 plot(roc_xgb)
+
+# plot best threshold and accuracy
+result_coords <- coords(roc_xgb, "best", best.method="closest.topleft",
+                        ret=c("threshold", "accuracy"))
+print(result_coords)#to get threshold and accuracy
+
+
+## uplift and gains
+# gets a table with relevant data
+lift_data <- calculate_lift_table(depvar = ifelse(test_y$t_credito_new == "yes", 1, 0),
+                                  predcol = probs_xgb$yes)
+
+# print bars
+temp <- lift_data %>% melt(id.vars = c("bucket"))
+temp <- as.data.table(temp)
+ggplot(temp[variable == "Cumlift"], aes(x = bucket, y = value, fill = variable)) +
+  geom_bar(stat = "identity") +
+  ylab("Cumulative lift (Uplift") + 
+  xlab("Bucket")
+
 ```
 
-```{r}
-test_y[, .N, by = t_credito_new]
-```
+
+* Calculate not the accuracy for the model, but the AUC or some measure
+* Tune xgboost (first on small sample, at night for big)
+* Make all this a function (for easy model evaluation)
 
 ```{r}
-(267/95551) * 100
+
 ```
+
+
+
 
 ```{r}
 #fit1_lasso <- glmnet(as.matrix(train_x), as.matrix(train_y), alpha = 1)
@@ -354,27 +386,7 @@ For unbalanced:
 
 
 
-```{r}
-set.seed(1)
-simulated <- data.frame(obs = factor(rep(letters[1:2], each = 100)),
-                        perfect = sort(runif(200), decreasing = TRUE),
-                        random = runif(200))
 
-lift1 <- lift(obs ~ random, data = simulated)
-lift1
-plot(lift1)
-
-
-lift2 <- lift(obs ~ random + perfect, data = simulated)
-lift2
-xyplot(lift2, auto.key = list(columns = 2))
-
-xyplot(lift2, auto.key = list(columns = 2), value = c(10, 30))
-
-xyplot(lift2, plot = "lift", auto.key = list(columns = 2))
-
-lift1$data
-```
 
 
 
